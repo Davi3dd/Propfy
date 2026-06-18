@@ -44,3 +44,5 @@ example
 
 # Credenciais do Firebase
 backend/firebase-credentials.json
+
+.env
