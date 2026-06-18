@@ -7,33 +7,41 @@ import {
   View,
 } from "react-native";
 
-export default function ImoveisScreen() {
-  const [imoveis] = useState([
+export default function VisitasScreen() {
+  const [visitas] = useState([
     {
       id: "1",
-      endereco: "Rua das Flores, 123",
-      valor: "R$ 350.000",
-      tipo: "Apartamento",
+      cliente: "Maria Silva",
+      imovel: "Rua das Flores, 123",
+      data: "20/06/2026",
+      status: "Agendada",
     },
-    { id: "2", endereco: "Av. Brasil, 456", valor: "R$ 500.000", tipo: "Casa" },
+    {
+      id: "2",
+      cliente: "João Santos",
+      imovel: "Av. Brasil, 456",
+      data: "22/06/2026",
+      status: "Confirmada",
+    },
   ]);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.titulo}>Imóveis</Text>
+      <Text style={styles.titulo}>Visitas</Text>
       <FlatList
-        data={imoveis}
+        data={visitas}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.card}>
-            <Text style={styles.tipo}>{item.tipo}</Text>
-            <Text style={styles.endereco}>{item.endereco}</Text>
-            <Text style={styles.valor}>{item.valor}</Text>
+            <Text style={styles.status}>{item.status}</Text>
+            <Text style={styles.cliente}>{item.cliente}</Text>
+            <Text style={styles.detalhe}>{item.imovel}</Text>
+            <Text style={styles.detalhe}>{item.data}</Text>
           </View>
         )}
       />
       <TouchableOpacity style={styles.botao}>
-        <Text style={styles.botaoTexto}>+ Novo Imóvel</Text>
+        <Text style={styles.botaoTexto}>+ Nova Visita</Text>
       </TouchableOpacity>
     </View>
   );
@@ -59,14 +67,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     elevation: 2,
   },
-  tipo: { fontSize: 12, color: "#888", marginBottom: 4 },
-  endereco: {
+  status: { fontSize: 12, color: "#888", marginBottom: 4 },
+  cliente: {
     fontSize: 16,
     fontWeight: "600",
     color: "#1a1a2e",
     marginBottom: 4,
   },
-  valor: { fontSize: 14, color: "#2ecc71", fontWeight: "600" },
+  detalhe: { fontSize: 14, color: "#666" },
   botao: {
     backgroundColor: "#1a1a2e",
     borderRadius: 12,

@@ -21,6 +21,7 @@ export default function ImoveisScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.titulo}>Imóveis</Text>
+
       <FlatList
         data={imoveis}
         keyExtractor={(item) => item.id}
@@ -32,6 +33,7 @@ export default function ImoveisScreen() {
           </View>
         )}
       />
+
       <TouchableOpacity style={styles.botao}>
         <Text style={styles.botaoTexto}>+ Novo Imóvel</Text>
       </TouchableOpacity>
@@ -59,14 +61,22 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     elevation: 2,
   },
-  tipo: { fontSize: 12, color: "#888", marginBottom: 4 },
+  tipo: {
+    fontSize: 12,
+    color: "#888",
+    marginBottom: 4,
+  },
   endereco: {
     fontSize: 16,
     fontWeight: "600",
     color: "#1a1a2e",
     marginBottom: 4,
   },
-  valor: { fontSize: 14, color: "#2ecc71", fontWeight: "600" },
+  valor: {
+    fontSize: 14,
+    color: "#2ecc71",
+    fontWeight: "600",
+  },
   botao: {
     backgroundColor: "#1a1a2e",
     borderRadius: 12,
@@ -74,5 +84,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 16,
   },
-  botaoTexto: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  botaoTexto: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
 });
