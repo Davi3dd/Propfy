@@ -1,7 +1,28 @@
+import {
+  Poppins_400Regular,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+  useFonts,
+} from "@expo-google-fonts/poppins";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { ActivityIndicator, View } from "react-native";
 
 export default function TabLayout() {
+  const [fontsLoaded] = useFonts({
+    Poppins_400Regular,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+  });
+
+  if (!fontsLoaded) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#1a1a2e" />
+      </View>
+    );
+  }
+
   return (
     <Tabs
       screenOptions={{
@@ -9,6 +30,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: "#1a1a2e",
         tabBarInactiveTintColor: "#aaa",
         tabBarStyle: { backgroundColor: "#fff", borderTopColor: "#eee" },
+        tabBarLabelStyle: { fontFamily: "Poppins_400Regular" },
       }}
     >
       <Tabs.Screen
