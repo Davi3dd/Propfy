@@ -1,4 +1,11 @@
-import { useState } from "react";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+} from "firebase/firestore";
+import { useEffect, useState } from "react";
 import {
   FlatList,
   ScrollView,
@@ -8,35 +15,26 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { db } from "../services/firebase";
 
 export default function VisitasScreen() {
-  const [visitas, setVisitas] = useState([
-    {
-      id: "1",
-      cliente: "Maria Silva",
-      imovel: "Rua das Flores, 123",
-      data: "20/06/2026",
-      horario: "10:00",
-      status: "Agendada",
-      observacao: "",
-    },
-    {
-      id: "2",
-      cliente: "João Santos",
-      imovel: "Av. Brasil, 456",
-      data: "22/06/2026",
-      horario: "14:30",
-      status: "Confirmada",
-      observacao: "Cliente prefere entrada pela lateral",
-    },
-  ]);
+  const [visitas, setVisitas] = useState<any[]>([]);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [cliente, setCliente] = useState("");
   const [imovel, setImovel] = useState("");
   const [data, setData] = useState("");
   const [horario, setHorario] = useState("");
-  const [status, setStatus] = useState("Agendada");
   const [observacao, setObservacao] = useState("");
+
+  const buscarVisitas = async () => {
+    const snapshot = await getDocs(collection(db, "visitas"));
+    const lista = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    setVisitas(lista);
+  };
+
+  useEffect(() => {
+    buscarVisitas();
+  }, []);
 
   const formatarData = (text: string) => {
     const numeros = text.replace(/\D/g, "");
@@ -54,30 +52,28 @@ export default function VisitasScreen() {
     setHorario(`${numeros.slice(0, 2)}:${numeros.slice(2, 4)}`);
   };
 
-  const adicionarVisita = () => {
+  const adicionarVisita = async () => {
     if (!cliente || !imovel || !data || !horario) return;
-    setVisitas([
-      ...visitas,
-      {
-        id: Date.now().toString(),
-        cliente,
-        imovel,
-        data,
-        horario,
-        status,
-        observacao,
-      },
-    ]);
+    await addDoc(collection(db, "visitas"), {
+      cliente,
+      imovel,
+      data,
+      horario,
+      status: "Agendada",
+      observacao,
+    });
     setCliente("");
     setImovel("");
     setData("");
     setHorario("");
     setObservacao("");
     setMostrarForm(false);
+    buscarVisitas();
   };
 
-  const deletarVisita = (id: string) => {
-    setVisitas(visitas.filter((item) => item.id !== id));
+  const deletarVisita = async (id: string) => {
+    await deleteDoc(doc(db, "visitas", id));
+    buscarVisitas();
   };
 
   return (

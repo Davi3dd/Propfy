@@ -1,27 +1,38 @@
-import { useState } from "react";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+} from "firebase/firestore";
+import { useEffect, useState } from "react";
 import {
   FlatList,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { db } from "../services/firebase";
 
 export default function ImoveisScreen() {
-  const [imoveis, setImoveis] = useState([
-    {
-      id: "1",
-      endereco: "Rua das Flores, 123",
-      valor: "R$ 350.000",
-      tipo: "Apartamento",
-    },
-    { id: "2", endereco: "Av. Brasil, 456", valor: "R$ 500.000", tipo: "Casa" },
-  ]);
+  const [imoveis, setImoveis] = useState<any[]>([]);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [endereco, setEndereco] = useState("");
   const [valor, setValor] = useState("");
   const [tipo, setTipo] = useState("");
+
+  const buscarImoveis = async () => {
+    const snapshot = await getDocs(collection(db, "imoveis"));
+    const lista = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    setImoveis(lista);
+  };
+
+  useEffect(() => {
+    buscarImoveis();
+  }, []);
 
   const formatarValor = (text: string) => {
     const numero = text.replace(/\D/g, "");
@@ -29,27 +40,27 @@ export default function ImoveisScreen() {
     setValor(formatado ? `R$ ${formatado}` : "");
   };
 
-  const adicionarImovel = () => {
+  const adicionarImovel = async () => {
     if (!endereco || !valor || !tipo) return;
-    setImoveis([
-      ...imoveis,
-      { id: Date.now().toString(), endereco, valor, tipo },
-    ]);
+    await addDoc(collection(db, "imoveis"), { endereco, valor, tipo });
     setEndereco("");
     setValor("");
     setTipo("");
     setMostrarForm(false);
+    buscarImoveis();
   };
 
-  const deletarImovel = (id: string) => {
-    setImoveis(imoveis.filter((item) => item.id !== id));
+  const deletarImovel = async (id: string) => {
+    await deleteDoc(doc(db, "imoveis", id));
+    buscarImoveis();
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <Text style={styles.titulo}>Imóveis</Text>
       <FlatList
         data={imoveis}
+        scrollEnabled={false}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.card}>
@@ -100,7 +111,7 @@ export default function ImoveisScreen() {
           <Text style={styles.botaoTexto}>+ Novo Imóvel</Text>
         </TouchableOpacity>
       )}
-    </View>
+    </ScrollView>
   );
 }
 
@@ -159,6 +170,7 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: "center",
     marginTop: 8,
+    marginBottom: 24,
   },
   botaoTexto: { color: "#fff", fontSize: 16, fontWeight: "600" },
 });

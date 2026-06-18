@@ -1,23 +1,37 @@
-import { StyleSheet, Text, View } from "react-native";
+import { useFocusEffect } from "expo-router";
+import { collection, getDocs } from "firebase/firestore";
+import { useCallback, useState } from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { db } from "../services/firebase";
 
 export default function DashboardScreen() {
+  const [totalImoveis, setTotalImoveis] = useState(0);
+  const [totalVisitas, setTotalVisitas] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      getDocs(collection(db, "imoveis")).then((s) => setTotalImoveis(s.size));
+      getDocs(collection(db, "visitas")).then((s) => setTotalVisitas(s.size));
+    }, []),
+  );
+
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <Text style={styles.titulo}>Propfy</Text>
       <Text style={styles.subtitulo}>Bem-vinda, corretora!</Text>
       <View style={styles.card}>
-        <Text style={styles.cardNumero}>0</Text>
+        <Text style={styles.cardNumero}>{totalImoveis}</Text>
         <Text style={styles.cardTexto}>Imóveis cadastrados</Text>
       </View>
       <View style={styles.card}>
-        <Text style={styles.cardNumero}>0</Text>
+        <Text style={styles.cardNumero}>{totalVisitas}</Text>
         <Text style={styles.cardTexto}>Visitas agendadas</Text>
       </View>
       <View style={styles.card}>
         <Text style={styles.cardNumero}>0</Text>
         <Text style={styles.cardTexto}>Contratos ativos</Text>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
