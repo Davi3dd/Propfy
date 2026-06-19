@@ -11,7 +11,7 @@
 - React Native + Expo
 - Node.js + Express
 - Firebase (Firestore)
-
+- Jest
 ---
 
 ## Funcionalidades
