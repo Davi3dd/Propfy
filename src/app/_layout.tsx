@@ -9,9 +9,10 @@ import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { ToastProvider } from "../components/Toast";
 import { AuthProvider, useAuth } from "../contexts/AuthContext";
-import { colors } from "../theme";
+import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
 
 function Splash() {
+  const { colors } = useTheme();
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.bg }}>
       <ActivityIndicator size="large" color={colors.primary} />
@@ -21,6 +22,7 @@ function Splash() {
 
 function RootNavigation() {
   const { user, initializing } = useAuth();
+  const { colors } = useTheme();
   const segments = useSegments();
   const router = useRouter();
 
@@ -41,7 +43,7 @@ function RootNavigation() {
   return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />;
 }
 
-export default function RootLayout() {
+function AppContent() {
   const [fontsLoaded] = useFonts({
     Poppins_400Regular,
     Poppins_600SemiBold,
@@ -56,5 +58,13 @@ export default function RootLayout() {
         <RootNavigation />
       </ToastProvider>
     </AuthProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }

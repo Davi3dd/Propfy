@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "expo-router";
 import {
   addDoc,
   collection,
@@ -7,7 +8,7 @@ import {
   getDocs,
   updateDoc,
 } from "firebase/firestore";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -23,8 +24,9 @@ import {
 import { EmptyState } from "../../components/EmptyState";
 import { SearchBar } from "../../components/SearchBar";
 import { useToast } from "../../components/Toast";
+import { useTheme } from "../../contexts/ThemeContext";
 import { db } from "../../services/firebase";
-import { colors, font, radius, shadow, spacing } from "../../theme";
+import { font, radius, shadow, spacing, type ColorPalette } from "../../theme";
 import type { Cliente, TipoCliente } from "../../types";
 import { avisar, confirmar } from "../../utils/dialogs";
 
@@ -37,16 +39,19 @@ const TIPOS: Array<"Todos" | TipoCliente> = [
 ];
 const TIPOS_CADASTRO: TipoCliente[] = ["Locador", "Locatário", "Comprador", "Vendedor"];
 
-const CORES_TIPO: Record<TipoCliente, string> = {
+const getCoresTipo = (colors: ColorPalette): Record<TipoCliente, string> => ({
   Locador: colors.blue,
   Locatário: colors.success,
   Comprador: colors.orange,
   Vendedor: colors.purple,
-};
+});
 
 const FORM_VAZIO = { nome: "", telefone: "", interesse: "", tipo: "Locatário" as TipoCliente };
 
 export default function ClientesScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const CORES_TIPO = useMemo(() => getCoresTipo(colors), [colors]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [filtro, setFiltro] = useState<"Todos" | TipoCliente>("Todos");
   const [mostrarForm, setMostrarForm] = useState(false);
@@ -75,9 +80,11 @@ export default function ClientesScreen() {
     }
   };
 
-  useEffect(() => {
-    buscarClientes();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      buscarClientes();
+    }, []),
+  );
 
   const clientesFiltrados = useMemo(() => {
     const q = busca.trim().toLowerCase();
@@ -324,7 +331,8 @@ export default function ClientesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorPalette) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: "row", alignItems: "center", gap: spacing.md, marginBottom: spacing.lg },
   headerIcon: { width: 40, height: 40, borderRadius: radius.md, alignItems: "center", justifyContent: "center" },

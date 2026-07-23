@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
 import { Animated, Platform, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, font, radius, shadow, spacing } from "../theme";
+import { useTheme } from "../contexts/ThemeContext";
+import { font, radius, shadow, spacing, type ColorPalette } from "../theme";
 
 type ToastType = "success" | "error";
 interface ToastState {
@@ -13,6 +14,8 @@ interface ToastState {
 const ToastContext = createContext<(message: string, type?: ToastType) => void>(() => {});
 
 export function ToastProvider({ children }: { children: ReactNode }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [toast, setToast] = useState<ToastState | null>(null);
   const insets = useSafeAreaInsets();
   const opacity = useRef(new Animated.Value(0)).current;
@@ -66,24 +69,25 @@ export function useToast() {
   return useContext(ToastContext);
 }
 
-const styles = StyleSheet.create({
-  wrap: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    alignItems: "center",
-    zIndex: 999,
-  },
-  toast: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderRadius: radius.pill,
-    maxWidth: "88%",
-    ...shadow.card,
-  },
-  text: { color: colors.white, fontSize: 14, fontFamily: font.semibold },
-});
+const createStyles = (colors: ColorPalette) =>
+  StyleSheet.create({
+    wrap: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      alignItems: "center",
+      zIndex: 999,
+    },
+    toast: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+      backgroundColor: colors.primary,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
+      borderRadius: radius.pill,
+      maxWidth: "88%",
+      ...shadow.card,
+    },
+    text: { color: colors.white, fontSize: 14, fontFamily: font.semibold },
+  });

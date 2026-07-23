@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "expo-router";
 import {
   addDoc,
   collection,
@@ -7,7 +8,7 @@ import {
   getDocs,
   updateDoc,
 } from "firebase/firestore";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -22,10 +23,13 @@ import {
 } from "react-native";
 import { EmptyState } from "../../components/EmptyState";
 import { SearchBar } from "../../components/SearchBar";
+import { SelectField } from "../../components/SelectField";
 import { useToast } from "../../components/Toast";
+import { useTheme } from "../../contexts/ThemeContext";
 import { db } from "../../services/firebase";
-import { colors, font, radius, shadow, spacing } from "../../theme";
-import type { Alerta, Contrato } from "../../types";
+import { font, radius, shadow, spacing, type ColorPalette } from "../../theme";
+import type { Cliente, Contrato, Imovel } from "../../types";
+import { calcularAlertas } from "../../utils/contratos";
 import { avisar, confirmar } from "../../utils/dialogs";
 
 const FORM_VAZIO = {
@@ -37,55 +41,12 @@ const FORM_VAZIO = {
   observacao: "",
 };
 
-function parseData(dataStr: string): Date {
-  const [dia, mes, ano] = dataStr.split("/");
-  return new Date(+ano, +mes - 1, +dia);
-}
-
-function diasDiferenca(data: Date): number {
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  return Math.ceil((data.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
-}
-
-function calcularAlertas(dataInicioStr: string, dataVencStr: string): Alerta[] {
-  const alertas: Alerta[] = [];
-
-  if (dataVencStr && dataVencStr.length === 10) {
-    const vencimento = parseData(dataVencStr);
-    const diasVenc = diasDiferenca(vencimento);
-    if (diasVenc < 0) {
-      alertas.push({ texto: "⛔ Contrato vencido", cor: colors.danger });
-    } else if (diasVenc <= 30) {
-      alertas.push({ texto: `⚠️ Renovação em ${diasVenc} dias`, cor: colors.danger });
-    } else if (diasVenc <= 90) {
-      alertas.push({ texto: `🔔 Renovação em ${diasVenc} dias`, cor: colors.orange });
-    } else {
-      alertas.push({ texto: `✅ Vence em ${diasVenc} dias`, cor: colors.success });
-    }
-  }
-
-  if (dataInicioStr && dataInicioStr.length === 10) {
-    const inicio = parseData(dataInicioStr);
-    const hoje = new Date();
-    const mesesAtivos =
-      (hoje.getFullYear() - inicio.getFullYear()) * 12 +
-      (hoje.getMonth() - inicio.getMonth());
-    const proximoReajuste = new Date(inicio);
-    proximoReajuste.setMonth(inicio.getMonth() + (Math.floor(mesesAtivos / 12) + 1) * 12);
-    const diasReajuste = diasDiferenca(proximoReajuste);
-    if (diasReajuste <= 30) {
-      alertas.push({ texto: `💰 Reajuste em ${diasReajuste} dias`, cor: colors.danger });
-    } else if (diasReajuste <= 60) {
-      alertas.push({ texto: `💰 Reajuste em ${diasReajuste} dias`, cor: colors.orange });
-    }
-  }
-
-  return alertas;
-}
-
 export default function ContratosScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [contratos, setContratos] = useState<Contrato[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [imoveis, setImoveis] = useState<Imovel[]>([]);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [form, setForm] = useState(FORM_VAZIO);
@@ -111,8 +72,14 @@ export default function ContratosScreen() {
     setCarregando(true);
     setErro(null);
     try {
-      const snapshot = await getDocs(collection(db, "contratos"));
-      setContratos(snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Contrato)));
+      const [contratosSnap, clientesSnap, imoveisSnap] = await Promise.all([
+        getDocs(collection(db, "contratos")),
+        getDocs(collection(db, "clientes")),
+        getDocs(collection(db, "imoveis")),
+      ]);
+      setContratos(contratosSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Contrato)));
+      setClientes(clientesSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Cliente)));
+      setImoveis(imoveisSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Imovel)));
     } catch {
       setErro("Erro ao carregar contratos. Verifique a conexão.");
     } finally {
@@ -120,9 +87,11 @@ export default function ContratosScreen() {
     }
   };
 
-  useEffect(() => {
-    buscarContratos();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      buscarContratos();
+    }, []),
+  );
 
   const formatarValor = (text: string) => {
     const numero = text.replace(/\D/g, "");
@@ -258,7 +227,7 @@ export default function ContratosScreen() {
               )
             }
             renderItem={({ item }) => {
-              const alertas = calcularAlertas(item.dataInicio, item.dataVencimento);
+              const alertas = calcularAlertas(item.dataInicio, item.dataVencimento, colors);
               return (
                 <View style={styles.card}>
                   <View style={styles.cardHeader}>
@@ -296,19 +265,19 @@ export default function ContratosScreen() {
             <Text style={styles.formTitulo}>
               {editandoId ? "Editar Contrato" : "Novo Contrato"}
             </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Nome do cliente"
-              placeholderTextColor={colors.textMuted}
+            <SelectField
+              placeholder="Selecione o cliente"
               value={form.cliente}
-              onChangeText={(v) => setField("cliente", v)}
+              onChange={(v) => setField("cliente", v)}
+              options={clientes.map((c) => ({ label: c.nome, subtitulo: c.telefone }))}
+              vazioTexto="Nenhum cliente cadastrado. Cadastre um cliente primeiro."
             />
-            <TextInput
-              style={styles.input}
-              placeholder="Endereço do imóvel"
-              placeholderTextColor={colors.textMuted}
+            <SelectField
+              placeholder="Selecione o imóvel"
               value={form.imovel}
-              onChangeText={(v) => setField("imovel", v)}
+              onChange={(v) => setField("imovel", v)}
+              options={imoveis.map((i) => ({ label: i.endereco, subtitulo: i.valor }))}
+              vazioTexto="Nenhum imóvel cadastrado. Cadastre um imóvel primeiro."
             />
             <TextInput
               style={styles.input}
@@ -374,7 +343,8 @@ export default function ContratosScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorPalette) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: "row", alignItems: "center", gap: spacing.md, marginBottom: spacing.xl },
   headerIcon: { width: 40, height: 40, borderRadius: radius.md, alignItems: "center", justifyContent: "center" },

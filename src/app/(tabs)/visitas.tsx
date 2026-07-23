@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "expo-router";
 import {
   addDoc,
   collection,
@@ -7,7 +8,7 @@ import {
   getDocs,
   updateDoc,
 } from "firebase/firestore";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -22,20 +23,22 @@ import {
 } from "react-native";
 import { EmptyState } from "../../components/EmptyState";
 import { SearchBar } from "../../components/SearchBar";
+import { SelectField } from "../../components/SelectField";
 import { useToast } from "../../components/Toast";
+import { useTheme } from "../../contexts/ThemeContext";
 import { db } from "../../services/firebase";
-import { colors, font, radius, shadow, spacing } from "../../theme";
-import type { StatusVisita, Visita } from "../../types";
+import { font, radius, shadow, spacing, type ColorPalette } from "../../theme";
+import type { Cliente, Imovel, StatusVisita, Visita } from "../../types";
 import { avisar, confirmar } from "../../utils/dialogs";
 
 const STATUS_OPCOES: StatusVisita[] = ["Agendada", "Confirmada", "Realizada", "Fechada"];
 
-const STATUS_CORES: Record<StatusVisita, string> = {
+const getStatusCores = (colors: ColorPalette): Record<StatusVisita, string> => ({
   Agendada: "#94A3B8",
   Confirmada: colors.blue,
   Realizada: colors.orange,
   Fechada: colors.success,
-};
+});
 
 const FORM_VAZIO = {
   cliente: "",
@@ -47,7 +50,12 @@ const FORM_VAZIO = {
 };
 
 export default function VisitasScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const STATUS_CORES = useMemo(() => getStatusCores(colors), [colors]);
   const [visitas, setVisitas] = useState<Visita[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [imoveis, setImoveis] = useState<Imovel[]>([]);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [form, setForm] = useState(FORM_VAZIO);
@@ -73,8 +81,14 @@ export default function VisitasScreen() {
     setCarregando(true);
     setErro(null);
     try {
-      const snapshot = await getDocs(collection(db, "visitas"));
-      setVisitas(snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Visita)));
+      const [visitasSnap, clientesSnap, imoveisSnap] = await Promise.all([
+        getDocs(collection(db, "visitas")),
+        getDocs(collection(db, "clientes")),
+        getDocs(collection(db, "imoveis")),
+      ]);
+      setVisitas(visitasSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Visita)));
+      setClientes(clientesSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Cliente)));
+      setImoveis(imoveisSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Imovel)));
     } catch {
       setErro("Erro ao carregar visitas. Verifique a conexão.");
     } finally {
@@ -82,9 +96,11 @@ export default function VisitasScreen() {
     }
   };
 
-  useEffect(() => {
-    buscarVisitas();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      buscarVisitas();
+    }, []),
+  );
 
   const formatarData = (text: string) => {
     const n = text.replace(/\D/g, "");
@@ -247,19 +263,19 @@ export default function VisitasScreen() {
             <Text style={styles.formTitulo}>
               {editandoId ? "Editar Visita" : "Nova Visita"}
             </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Nome do cliente"
-              placeholderTextColor={colors.textMuted}
+            <SelectField
+              placeholder="Selecione o cliente"
               value={form.cliente}
-              onChangeText={(v) => setField("cliente", v)}
+              onChange={(v) => setField("cliente", v)}
+              options={clientes.map((c) => ({ label: c.nome, subtitulo: c.telefone }))}
+              vazioTexto="Nenhum cliente cadastrado. Cadastre um cliente primeiro."
             />
-            <TextInput
-              style={styles.input}
-              placeholder="Endereço do imóvel"
-              placeholderTextColor={colors.textMuted}
+            <SelectField
+              placeholder="Selecione o imóvel"
               value={form.imovel}
-              onChangeText={(v) => setField("imovel", v)}
+              onChange={(v) => setField("imovel", v)}
+              options={imoveis.map((i) => ({ label: i.endereco, subtitulo: i.valor }))}
+              vazioTexto="Nenhum imóvel cadastrado. Cadastre um imóvel primeiro."
             />
             <View style={styles.row}>
               <TextInput
@@ -331,7 +347,8 @@ export default function VisitasScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorPalette) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: "row", alignItems: "center", gap: spacing.md, marginBottom: spacing.xl },
   headerIcon: { width: 40, height: 40, borderRadius: radius.md, alignItems: "center", justifyContent: "center" },

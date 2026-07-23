@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -11,10 +11,13 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useTheme } from "../contexts/ThemeContext";
 import { auth } from "../services/firebase";
-import { colors, font, radius, shadow, spacing } from "../theme";
+import { font, radius, shadow, spacing, type ColorPalette } from "../theme";
 
 export default function LoginScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [verSenha, setVerSenha] = useState(false);
@@ -114,7 +117,8 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorPalette) =>
+  StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bg },
   container: { flex: 1, padding: spacing.xl, justifyContent: "center", alignItems: "center" },
   logoCircle: {

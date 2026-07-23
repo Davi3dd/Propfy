@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "expo-router";
 import {
   addDoc,
   collection,
@@ -7,7 +8,7 @@ import {
   getDocs,
   updateDoc,
 } from "firebase/firestore";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -23,8 +24,9 @@ import {
 import { EmptyState } from "../../components/EmptyState";
 import { SearchBar } from "../../components/SearchBar";
 import { useToast } from "../../components/Toast";
+import { useTheme } from "../../contexts/ThemeContext";
 import { db } from "../../services/firebase";
-import { colors, font, radius, shadow, spacing } from "../../theme";
+import { font, radius, shadow, spacing, type ColorPalette } from "../../theme";
 import type { Imovel } from "../../types";
 import { avisar, confirmar } from "../../utils/dialogs";
 
@@ -39,6 +41,8 @@ const FORM_VAZIO = {
 };
 
 export default function ImoveisScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [imoveis, setImoveis] = useState<Imovel[]>([]);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
@@ -74,9 +78,11 @@ export default function ImoveisScreen() {
     }
   };
 
-  useEffect(() => {
-    buscarImoveis();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      buscarImoveis();
+    }, []),
+  );
 
   const formatarValor = (text: string) => {
     const numero = text.replace(/\D/g, "");
@@ -317,7 +323,8 @@ export default function ImoveisScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorPalette) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: "row", alignItems: "center", gap: spacing.md, marginBottom: spacing.xl },
   headerIcon: { width: 40, height: 40, borderRadius: radius.md, alignItems: "center", justifyContent: "center" },

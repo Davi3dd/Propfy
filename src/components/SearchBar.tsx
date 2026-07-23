@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useMemo } from "react";
 import { Platform, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
-import { colors, font, radius, spacing } from "../theme";
+import { useTheme } from "../contexts/ThemeContext";
+import { font, radius, spacing, type ColorPalette } from "../theme";
 
 interface Props {
   value: string;
@@ -9,6 +11,9 @@ interface Props {
 }
 
 export function SearchBar({ value, onChangeText, placeholder = "Buscar..." }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.wrap}>
       <Ionicons name="search" size={18} color={colors.textMuted} />
@@ -30,24 +35,25 @@ export function SearchBar({ value, onChangeText, placeholder = "Buscar..." }: Pr
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.lg,
-  },
-  input: {
-    flex: 1,
-    paddingVertical: 12,
-    fontSize: 14,
-    fontFamily: font.regular,
-    color: colors.textPrimary,
-    ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : {}),
-  },
-});
+const createStyles = (colors: ColorPalette) =>
+  StyleSheet.create({
+    wrap: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: spacing.lg,
+      marginBottom: spacing.lg,
+    },
+    input: {
+      flex: 1,
+      paddingVertical: 12,
+      fontSize: 14,
+      fontFamily: font.regular,
+      color: colors.textPrimary,
+      ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : {}),
+    },
+  });

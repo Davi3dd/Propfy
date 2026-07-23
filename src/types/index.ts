@@ -41,7 +41,10 @@ export interface Contrato {
   observacao?: string;
 }
 
+export type NivelAlerta = "urgente" | "atencao" | "ok";
+
 export interface Alerta {
   texto: string;
   cor: string;
+  nivel: NivelAlerta;
 }

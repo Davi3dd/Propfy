@@ -1,12 +1,36 @@
-import { Platform, type TextStyle, type ViewStyle } from "react-native";
+import { Platform, type ViewStyle } from "react-native";
 
 /**
  * Design system do Propfy — tokens centralizados de cor, tipografia,
  * espaçamento, raio e sombra. Mantém o visual consistente e evita
  * repetição de valores mágicos pelas telas.
+ *
+ * As cores variam por tema (claro/escuro) — use o hook `useTheme()`
+ * para consumi-las de forma reativa. O restante dos tokens não muda.
  */
 
-export const colors = {
+export interface ColorPalette {
+  bg: string;
+  surface: string;
+  primary: string;
+  primarySoft: string;
+  textPrimary: string;
+  textSecondary: string;
+  textMuted: string;
+  border: string;
+  danger: string;
+  dangerBg: string;
+  success: string;
+  white: string;
+  blue: string;
+  green: string;
+  purple: string;
+  orange: string;
+}
+
+export type ColorScheme = "light" | "dark";
+
+const light: ColorPalette = {
   bg: "#F6F7FB",
   surface: "#FFFFFF",
   primary: "#1A1A2E",
@@ -19,12 +43,32 @@ export const colors = {
   dangerBg: "#FEECEC",
   success: "#12B76A",
   white: "#FFFFFF",
-  // Cores por categoria / seção
   blue: "#3B82F6",
   green: "#10B981",
   purple: "#8B5CF6",
   orange: "#F59E0B",
-} as const;
+};
+
+const dark: ColorPalette = {
+  bg: "#0E1016",
+  surface: "#171A23",
+  primary: "#5B6EF5",
+  primarySoft: "#3A3F63",
+  textPrimary: "#F2F3F7",
+  textSecondary: "#A7ACC0",
+  textMuted: "#6B7086",
+  border: "#262A38",
+  danger: "#F87171",
+  dangerBg: "#3B1D1F",
+  success: "#34D399",
+  white: "#FFFFFF",
+  blue: "#60A5FA",
+  green: "#34D399",
+  purple: "#A78BFA",
+  orange: "#FBBF24",
+};
+
+export const palettes: Record<ColorScheme, ColorPalette> = { light, dark };
 
 export const font = {
   regular: "Poppins_400Regular",
@@ -52,33 +96,23 @@ export const spacing = {
 /** Sombra suave e multiplataforma (iOS / Android / Web). */
 export const shadow = {
   card: Platform.select<ViewStyle>({
-    web: { boxShadow: "0 6px 16px rgba(26, 26, 46, 0.06)" } as ViewStyle,
+    web: { boxShadow: "0 6px 16px rgba(0, 0, 0, 0.16)" } as ViewStyle,
     default: {
-      shadowColor: "#1A1A2E",
+      shadowColor: "#000000",
       shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.06,
+      shadowOpacity: 0.16,
       shadowRadius: 14,
       elevation: 3,
     },
   }) as ViewStyle,
   soft: Platform.select<ViewStyle>({
-    web: { boxShadow: "0 2px 8px rgba(26, 26, 46, 0.05)" } as ViewStyle,
+    web: { boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)" } as ViewStyle,
     default: {
-      shadowColor: "#1A1A2E",
+      shadowColor: "#000000",
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
+      shadowOpacity: 0.1,
       shadowRadius: 8,
       elevation: 2,
     },
   }) as ViewStyle,
 } as const;
-
-/** Escala tipográfica pronta com a família Poppins aplicada. */
-export const typography: Record<string, TextStyle> = {
-  h1: { fontFamily: font.bold, fontSize: 30, color: colors.textPrimary },
-  h2: { fontFamily: font.bold, fontSize: 24, color: colors.textPrimary },
-  title: { fontFamily: font.semibold, fontSize: 17, color: colors.textPrimary },
-  body: { fontFamily: font.regular, fontSize: 14, color: colors.textSecondary },
-  label: { fontFamily: font.semibold, fontSize: 13, color: colors.textSecondary },
-  caption: { fontFamily: font.regular, fontSize: 12, color: colors.textMuted },
-};
