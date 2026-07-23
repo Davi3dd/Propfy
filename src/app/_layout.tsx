@@ -4,80 +4,57 @@ import {
   Poppins_700Bold,
   useFonts,
 } from "@expo-google-fonts/poppins";
-import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { Stack, useRouter, useSegments, type Href } from "expo-router";
+import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
+import { ToastProvider } from "../components/Toast";
+import { AuthProvider, useAuth } from "../contexts/AuthContext";
+import { colors } from "../theme";
 
-export default function TabLayout() {
+function Splash() {
+  return (
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.bg }}>
+      <ActivityIndicator size="large" color={colors.primary} />
+    </View>
+  );
+}
+
+function RootNavigation() {
+  const { user, initializing } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (initializing) return;
+
+    const dentroDoAppProtegido = segments[0] === "(tabs)";
+
+    if (!user && dentroDoAppProtegido) {
+      router.replace("/login");
+    } else if (user && !dentroDoAppProtegido) {
+      router.replace("/" as Href);
+    }
+  }, [user, initializing, segments]);
+
+  if (initializing) return <Splash />;
+
+  return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />;
+}
+
+export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     Poppins_400Regular,
     Poppins_600SemiBold,
     Poppins_700Bold,
   });
 
-  if (!fontsLoaded) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#1a1a2e" />
-      </View>
-    );
-  }
+  if (!fontsLoaded) return <Splash />;
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: "#1a1a2e",
-        tabBarInactiveTintColor: "#aaa",
-        tabBarStyle: { backgroundColor: "#fff", borderTopColor: "#eee" },
-        tabBarLabelStyle: { fontFamily: "Poppins_400Regular" },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Dashboard",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="grid-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: "Imóveis",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="visitas"
-        options={{
-          title: "Visitas",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="clientes"
-        options={{
-          title: "Clientes",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="people-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="contratos"
-        options={{
-          title: "Contratos",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="document-text-outline" size={size} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+    <AuthProvider>
+      <ToastProvider>
+        <RootNavigation />
+      </ToastProvider>
+    </AuthProvider>
   );
 }
